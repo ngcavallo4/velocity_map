@@ -5,4 +5,4 @@ def plot_velocity(d_init: float, h_init: float, r: float, w: float, d_range: lis
 
     plotter.plot_mesh()
 
-plot_velocity(3.0, 2.5, 0.1, 25, [0, 500], [0,100])
+plot_velocity(3.0, 2.5, 0.1, 25, [0, 0.02], [0,0.02])
