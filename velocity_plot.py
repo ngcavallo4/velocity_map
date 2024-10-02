@@ -5,43 +5,48 @@ from matplotlib import ticker
 
 class VelocityPlotter():
 
-    def __init__(self, d_init: float, h_init: float, r: float, w: float, d_range: list, h_range: list):
+    def __init__(self, d_dict: dict, h: float, r: float, w: float):
 
-        self.d_init = d_init
-        self.h_init = h_init
+        self.d_dict = d_dict
+        self.h = h
         self.r = r
         self.w = w
-        self.d_range = d_range
-        self.h_range = h_range
 
-    def initialize_mesh(self):
+        
 
-        d_mesh, h_mesh = np.meshgrid(self.d_range, self.h_range)
+    def plot(self):
+        """This is the plotting function that you call to plot the velocity mesh for
+        all stiffness grids predicted by the heatmap. 
+        """
 
-        return d_mesh, h_mesh
+        for d_mesh in self.d_dict.values():
+            if isinstance(d_mesh, np.ndarray):
+                self.plot_mesh(d_mesh)
+            else:
+                raise ValueError("Input mesh is of wrong type.")
 
-    def velocity_function(self,d,h):
-        return ((2*self.r*self.w)/(math.pi))*math.sqrt((1-((d/self.r) + (h/self.r) - 1))**2)
+    def velocity_function(self,d):
+        return ((2*self.r*self.w)/(math.pi))*math.sqrt((1-((d/self.r) + (self.h/self.r) - 1))**2)
     
-    def apply_velocity_to_mesh(self):
-        d_mesh, h_mesh = self.initialize_mesh()
-
-        # Use numpy.vectorize to apply the velocity_function to each element of the meshgrid
+    def apply_velocity_to_mesh(self, d_mesh: np.ndarray):
+        
         vectorized_velocity = np.vectorize(self.velocity_function)
-        velocity_mesh = vectorized_velocity(d_mesh, h_mesh)
+        velocity_mesh = vectorized_velocity(d_mesh)
 
         return velocity_mesh
     
-    def plot_mesh(self):
+    def plot_mesh(self, d_mesh):
 
-        d_mesh, h_mesh = self.initialize_mesh()
-        velocity_grid = self.apply_velocity_to_mesh()
+        velocity_grid = self.apply_velocity_to_mesh(d_mesh)
 
         colormin = np.min(velocity_grid)
         colormplt = np.max(velocity_grid)
 
+
         plt.figure()
-        im = plt.contourf(d_mesh, h_mesh, velocity_grid, levels=np.linspace(colormin, colormplt, 70), cmap = 'viridis', origin = 'lower', extent=(self.d_range[0], self.d_range[1], self.h_range[0], self.h_range[1]))
+        nrows, ncols = d_mesh.shape
+        extent = (0, ncols, 0, nrows)
+        im = plt.imshow(velocity_grid, cmap = 'viridis', origin = 'lower', extent=extent)
         plt.title('Velocity Grid')
         plt.xlabel("D (depth of insertion, m)")
         plt.ylabel("H (height to belly, m)")
